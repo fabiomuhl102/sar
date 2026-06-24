@@ -1,40 +1,30 @@
 #!/bin/bash
 
-set -e  # 🔥 para tudo se der erro
-
 echo "==================================="
-echo " SAR INSTALLER - SAFE VERSION"
+echo "  SAR INSTALLER"
 echo "==================================="
 
 BASE="/opt/automacao"
 
-echo "[1/6] Criando estrutura base..."
-sudo mkdir -p "$BASE"
+echo "[1/5] Criando estrutura..."
+mkdir -p "$BASE"
+mkdir -p "$BASE/backup"
+mkdir -p "$BASE/logs"
 
-echo "[2/6] Copiando sistema..."
-sudo rsync -av \
-  --exclude 'venv' \
-  --exclude '__pycache__' \
-  --exclude '*.pyc' \
-  ./ "$BASE/"
+echo "[2/5] Copiando scripts..."
 
-cd "$BASE" || exit 1
+cp -r ./scripts "$BASE/"
+cp -r ./config "$BASE/"
 
-echo "[3/6] Criando ambiente Python..."
-python3 -m venv venv
-source venv/bin/activate
+echo "[3/5] Ajustando permissões..."
+chmod +x "$BASE/scripts/maintenance/"*.sh 2>/dev/null
+chmod +x "$BASE/scripts/"* 2>/dev/null
 
-echo "[4/6] Instalando dependências..."
-pip install --upgrade pip
-if [ -f requirements.txt ]; then
-    pip install -r requirements.txt
-fi
+echo "[4/5] Criando links globais..."
 
-echo "[5/6] Criando links globais..."
-sudo ln -sf "$BASE/bin/sar-backup" /usr/local/bin/sar-backup
-sudo ln -sf "$BASE/bin/sar-backup-disaster" /usr/local/bin/sar-backup-disaster
-sudo ln -sf "$BASE/bin/sar-backup-auto" /usr/local/bin/sar-backup-auto
+ln -sf "$BASE/scripts/maintenance/sar-backup-disaster.sh" /usr/local/bin/sar-backup-disaster
+ln -sf "$BASE/scripts/maintenance/sar-backup-auto.sh" /usr/local/bin/sar-backup-auto
 
-echo "[6/6] Finalizando..."
+echo "[5/5] Finalizado"
 
-echo "✔ SAR instalado com sucesso"
+echo "SAR instalado com sucesso"
