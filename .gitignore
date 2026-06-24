@@ -1,0 +1,21 @@
+# Logs
+*.log
+logs/
+
+# Backups
+backup/
+*.tar.gz
+
+# Runtime
+temp/
+__pycache__/
+*.pyc
+
+# Volumes (NÃO versionar)
+volumes/
+
+# Environment
+.env
+
+# Cache
+*.cache

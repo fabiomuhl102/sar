@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-status
+# Versão: 0.1.0
+# =====================================================
+
+# Carrega a configuração da plataforma
+source /opt/automacao/scripts/lib/configuracao.sh
+
+# Carrega as bibliotecas
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/sistema.sh"
+source "$SAR_LIB/docker.sh"
+source "$SAR_LIB/disco.sh"
+
+echo
+echo "=========================================================="
+echo "        $SIGLA - $NOME"
+echo "=========================================================="
+echo
+
+echo "Versão.............: $VERSAO"
+echo "Autor..............: $AUTOR"
+echo
+
+echo "Sistema............: $(sistema_nome)"
+echo "Kernel.............: $(kernel_versao)"
+echo "Hostname...........: $(hostname_servidor)"
+echo "Uptime.............: $(uptime_servidor)"
+echo "Data/Hora..........: $(data_hora)"
+
+echo
+echo "---------------------- Docker ----------------------------"
+
+if docker_ativo; then
+    STATUS_DOCKER="ATIVO"
+else
+    STATUS_DOCKER="INATIVO"
+fi
+
+echo "Status.............: $STATUS_DOCKER"
+echo "Versão.............: $(docker_versao)"
+echo "Containers.........: $(docker_containers)"
+
+echo
+echo "---------------- Armazenamento ---------------------------"
+
+echo "Sistema............: $(disco_sistema)"
+echo "Livre..............: $(disco_livre_sistema)"
+
+echo
+
+echo "Backup.............: $(disco_backup)"
+echo "Livre..............: $(disco_livre_backup)"
+
+echo
+echo "----------------------------------------------------------"
+
+echo "Diretório SAR......: $DIRETORIO_RAIZ"
+echo "Diretório Backup...: $DIRETORIO_BACKUP"
+
+echo

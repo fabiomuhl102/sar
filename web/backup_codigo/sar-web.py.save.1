@@ -1,0 +1,134 @@
+
+def get_mem():
+    return float(cmd("awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {print (t-a)*100/t}' /proc/meminfo").replace(",", "."))
+
+# --------------------------
+# API (DADOS)
+# --------------------------
+@app.route("/api/metrics")
+def api_metrics():
+
+    cpu = get_cpu()
+    mem = get_mem()
+    now = time.strftime("%H:%M:%S")
+
+    history_cpu.append(cpu)
+    history_mem.append(mem)
+    history_time.append(now)
+
+    # limitar histórico
+    del history_cpu[:-20]
+    del history_mem[:-20]
+    del history_time[:-20]
+
+    return jsonify({
+        "labels": history_time,
+        "cpu": history_cpu,
+        "mem": history_mem
+    })
+
+# --------------------------
+# FRONTEND
+# --------------------------
+@app.route("/")
+def home():
+    return Response("""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SAR PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    background:#0d1117;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
+
+.grid {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:20px;
+}
+
+.card {
+    background:#161b22;
+    padding:15px;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚀 SAR Dashboard PRO</h1>
+
+<div class="grid">
+
+<div class="card">
+<h3>CPU (%)</h3>
+<canvas id="cpuChart"></canvas>
+</div>
+
+<div class="card">
+<h3>Memória (%)</h3>
+<canvas id="memChart"></canvas>
+</div>
+
+</div>
+
+<script>
+
+async function loadData() {
+    const res = await fetch('/api/metrics');
+    return await res.json();
+}
+
+async function render() {
+
+    const data = await loadData();
+
+    new Chart(document.getElementById('cpuChart'), {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'CPU %',
+                data: data.cpu,
+                borderColor: '#00ff99',
+                tension: 0.3
+            }]
+        }
+    });
+
+    new Chart(document.getElementById('memChart'), {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Memória %',
+                data: data.mem,
+                borderColor: '#00b3ff',
+                tension: 0.3
+            }]
+        }
+    });
+}
+
+render();
+setInterval(render, 5000);
+
+</script>
+
+</body>
+</html>
+""", mimetype="text/html")
+
+# --------------------------
+# START
+# --------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8088)

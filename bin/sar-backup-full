@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - BACKUP COMPLETO
+# =====================================================
+
+sar-check >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Falha na verificação do sistema"
+    exit 1
+fi
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source /opt/automacao/scripts/lib/identidade.sh
+source /opt/automacao/scripts/lib/ui.sh
+
+DATA=$(date +"%Y-%m-%d_%H-%M-%S")
+
+ARQUIVO="sar_backup_full_$DATA.tar.gz"
+DESTINO="$DIRETORIO_BACKUP/$ARQUIVO"
+
+ui_titulo "BACKUP COMPLETO DO SAR"
+
+ui_info "Iniciando backup completo..."
+echo
+
+tar -czf "$DESTINO" \
+  --exclude=/opt/automacao/temp \
+  --exclude=/opt/automacao/logs \
+  --exclude=/opt/automacao/web/venv \
+  --exclude='*/__pycache__' \
+  /opt/automacao
+
+if [ $? -eq 0 ]; then
+    ui_ok "Backup completo criado com sucesso"
+    ui_info "Arquivo: $DESTINO"
+else
+    ui_erro "Falha ao criar backup completo"
+    exit 1
+fi
+
+echo

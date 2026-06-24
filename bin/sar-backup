@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-backup
+# Versão: 0.1.0
+# =====================================================
+# -----------------------------------------------------
+# Validação do sistema antes do backup
+# -----------------------------------------------------
+sar-check >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    ui_erro "Falha na verificação do sistema"
+    ui_erro "Backup abortado por segurança"
+    exit 1
+fi
+
+#-----------------------------------------------------
+source /opt/automacao/scripts/lib/configuracao.sh
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/ui.sh"
+
+# -----------------------------------------------------
+# Data do backup
+# -----------------------------------------------------
+DATA=$(date +"%Y-%m-%d_%H-%M-%S")
+
+ARQUIVO="sar_backup_$DATA.tar.gz"
+DESTINO="$DIRETORIO_BACKUP/$ARQUIVO"
+
+# -----------------------------------------------------
+# Cabeçalho
+# -----------------------------------------------------
+ui_titulo "BACKUP DO SAR"
+
+ui_info "Iniciando backup..."
+echo
+
+# -----------------------------------------------------
+# Criação do backup
+# -----------------------------------------------------
+tar -czf "$DESTINO" \
+  --exclude=/opt/automacao/temp \
+  --exclude=/opt/automacao/logs \
+  --exclude=/opt/automacao/volumes \
+  --exclude=/opt/automacao/backup \
+  /opt/automacao
+
+#-----------------------------------------------------
+# Verificação
+# -----------------------------------------------------
+if [ $? -eq 0 ]; then
+    ui_ok "Backup criado com sucesso"
+    ui_info "Arquivo: $DESTINO"
+else
+    ui_erro "Falha ao criar backup"
+    exit 1
+fi
+
+echo

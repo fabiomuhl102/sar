@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-check
+# Versão: 0.1.0
+# =====================================================
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/docker.sh"
+source "$SAR_LIB/ui.sh"
+
+# -----------------------------------------------------
+# Cabeçalho
+# -----------------------------------------------------
+ui_titulo "VERIFICAÇÃO DO SISTEMA SAR"
+
+ERROS=0
+
+# -----------------------------------------------------
+# Função de teste
+# -----------------------------------------------------
+check_ok() {
+    ui_ok "$1"
+}
+
+check_erro() {
+    ui_erro "$1"
+    ERROS=$((ERROS+1))
+}
+
+# -----------------------------------------------------
+# Diretórios principais
+# -----------------------------------------------------
+[ -d /opt/automacao ] && check_ok "Diretório SAR OK" || check_erro "Diretório SAR não existe"
+[ -d /mnt/backups ] && check_ok "Diretório backup OK" || check_erro "Diretório backup não existe"
+
+# -----------------------------------------------------
+# Espaço em disco
+# -----------------------------------------------------
+USO_SISTEMA=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+USO_BACKUP=$(df /mnt/backups | awk 'NR==2 {print $5}' | sed 's/%//')
+
+[ "$USO_SISTEMA" -lt 90 ] && check_ok "Disco sistema OK ($USO_SISTEMA%)" || check_erro "Disco sistema crítico ($USO_SISTEMA%)"
+[ "$USO_BACKUP" -lt 90 ] && check_ok "Disco backup OK ($USO_BACKUP%)" || check_erro "Disco backup crítico ($USO_BACKUP%)"
+
+# -----------------------------------------------------
+# Docker
+# -----------------------------------------------------
+docker_ativo && check_ok "Docker ativo" || check_erro "Docker inativo"
+
+# -----------------------------------------------------
+# Permissão backup
+# -----------------------------------------------------
+touch /mnt/backups/.sar_test 2>/dev/null
+
+if [ $? -eq 0 ]; then
+    rm -f /mnt/backups/.sar_test
+    check_ok "Permissão de backup OK"
+else
+    check_erro "Sem permissão de escrita no backup"
+fi
+
+# -----------------------------------------------------
+# Resultado final
+# -----------------------------------------------------
+echo
+
+if [ "$ERROS" -eq 0 ]; then
+    ui_ok "Sistema SAR saudável"
+else
+    ui_erro "Sistema SAR com $ERROS problema(s)"
+fi
+
+echo

@@ -1,0 +1,22 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+
+    env_file:
+      - /opt/automacao/.env
+
+    volumes:
+      - /opt/automacao/volumes/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+
+    ports:
+      - "8123:8123"
+
+    networks:
+      - automacao
+
+networks:
+  automacao:
+    external: true

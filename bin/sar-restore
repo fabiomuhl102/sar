@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - RESTORE (RECUPERAÇÃO DE BACKUP)
+# =====================================================
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source /opt/automacao/scripts/lib/identidade.sh
+source /opt/automacao/scripts/lib/logger.sh
+
+echo
+echo "=========================================================="
+echo "           SAR - RESTORE DE SISTEMA"
+echo "=========================================================="
+echo
+
+# -----------------------------------------------------
+# Validação de parâmetro
+# -----------------------------------------------------
+ARQUIVO="$1"
+
+if [ -z "$ARQUIVO" ]; then
+    echo "✖ Nenhum arquivo informado"
+    echo
+    echo "Uso:"
+    echo "  sar-restore /mnt/backups/arquivo.tar.gz"
+    exit 1
+fi
+
+# -----------------------------------------------------
+# Verificação do arquivo
+# -----------------------------------------------------
+if [ ! -f "$ARQUIVO" ]; then
+    log_error "Arquivo não encontrado: $ARQUIVO"
+    exit 1
+fi
+
+echo "⚠ ATENÇÃO: ESTA OPERAÇÃO VAI SOBRESCREVER O SAR"
+echo "Arquivo: $ARQUIVO"
+echo
+
+read -p "Tem certeza que deseja continuar? (sim/não): " CONFIRMA
+
+if [ "$CONFIRMA" != "sim" ]; then
+    log_warn "Restore cancelado pelo usuário"
+    exit 0
+fi
+
+# -----------------------------------------------------
+# Execução do restore
+# -----------------------------------------------------
+log_info "Iniciando restore do sistema SAR"
+
+tar -xzf "$ARQUIVO" -C /
+
+if [ $? -eq 0 ]; then
+    log_ok "Restore concluído com sucesso"
+else
+    log_error "Falha no restore do sistema"
+    exit 1
+fi
+
+echo
+echo "=========================================================="
+echo "           RESTORE FINALIZADO"
+echo "=========================================================="
+echo

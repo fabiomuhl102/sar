@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-servicos
+# Versão: 0.2.0
+# =====================================================
+
+# Bibliotecas
+source /opt/automacao/scripts/lib/configuracao.sh
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/docker.sh"
+source "$SAR_LIB/servicos.sh"
+source "$SAR_LIB/ui.sh"
+
+# -----------------------------------------------------
+# Função de exibição de serviço
+# -----------------------------------------------------
+mostrar_servico() {
+
+    local NOME="$1"
+    local CONTAINER="$2"
+
+    printf "%-20s : %s\n" "$NOME" "$(servico_status "$CONTAINER")"
+
+}
+
+# -----------------------------------------------------
+# Cabeçalho
+# -----------------------------------------------------
+ui_titulo "SERVIÇOS DO SAR"
+
+ui_info "Verificando estado dos containers"
+
+echo
+
+# -----------------------------------------------------
+# Docker base
+# -----------------------------------------------------
+printf "%-20s : %s\n" "Docker" "$(docker_ativo && echo ONLINE || echo OFFLINE)"
+
+echo
+
+# -----------------------------------------------------
+# Serviços
+# -----------------------------------------------------
+mostrar_servico "Home Assistant" "$HOMEASSISTANT"
+mostrar_servico "Node-RED" "$NODERED"
+mostrar_servico "Mosquitto" "$MOSQUITTO"
+mostrar_servico "ESPHome" "$ESPHOME"
+mostrar_servico "Portainer" "$PORTAINER"
+
+echo
+
+ui_info "Verificação concluída"

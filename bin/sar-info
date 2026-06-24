@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-info
+# Versão: 0.1.0
+# =====================================================
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/docker.sh"
+source "$SAR_LIB/servicos.sh"
+source "$SAR_LIB/ui.sh"
+
+# -----------------------------------------------------
+# Cabeçalho
+# -----------------------------------------------------
+ui_titulo "INFORMAÇÕES DO SERVIDOR SAR"
+
+# -----------------------------------------------------
+# Sistema
+# -----------------------------------------------------
+echo "Sistema............: $(lsb_release -d | cut -f2)"
+echo "Kernel.............: $(uname -r)"
+echo "Hostname...........: $(hostname)"
+echo "Uptime.............: $(uptime -p)"
+
+echo
+
+# -----------------------------------------------------
+# Memória
+# -----------------------------------------------------
+MEM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
+MEM_USED=$(free -h | awk '/^Mem:/ {print $3}')
+
+echo "Memória............: $MEM_USED / $MEM_TOTAL"
+
+# -----------------------------------------------------
+# Load
+# -----------------------------------------------------
+LOAD=$(cat /proc/loadavg | awk '{print $1" "$2" "$3}')
+echo "Load Average.......: $LOAD"
+
+echo
+
+# -----------------------------------------------------
+# Docker
+# -----------------------------------------------------
+echo "Docker.............: $(docker_ativo && echo ONLINE || echo OFFLINE)"
+
+# -----------------------------------------------------
+# Containers
+# -----------------------------------------------------
+echo "Containers.........: $(docker ps -q | wc -l)"
+
+echo
+
+# -----------------------------------------------------
+# Disco
+# -----------------------------------------------------
+echo "Disco Sistema......: $(df -h / | awk 'NR==2 {print $3" / "$2" ("$5")"}')"
+echo "Disco Backup.......: $(df -h /mnt/backups | awk 'NR==2 {print $3" / "$2" ("$5")"}')"
+
+echo

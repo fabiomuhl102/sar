@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - Servidor de Automação Residencial
+# Comando: sar-logs
+# Versão: 2.0.0 (LOG CENTER)
+# =====================================================
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source "$SAR_LIB/identidade.sh"
+source "$SAR_LIB/ui.sh"
+
+LOG_BACKUP="/opt/automacao/logs/backup.log"
+
+# -----------------------------------------------------
+# Ajuda
+# -----------------------------------------------------
+ajuda() {
+    echo "Uso:"
+    echo "  sar-logs [tipo]"
+    echo
+    echo "Tipos:"
+    echo "  backup     Logs de backup"
+    echo "  erro       Erros gerais"
+    echo "  sistema    Logs do sistema SAR"
+    echo "  tail       Monitor em tempo real"
+}
+
+# -----------------------------------------------------
+# Sem parâmetro = ajuda
+# -----------------------------------------------------
+if [ -z "$1" ]; then
+    ui_titulo "SAR - LOG CENTER"
+    ajuda
+    exit 0
+fi
+
+TIPO="$1"
+
+# -----------------------------------------------------
+# BACKUP LOGS
+# -----------------------------------------------------
+if [ "$TIPO" = "backup" ]; then
+    ui_titulo "LOGS DE BACKUP"
+    tail -n 50 "$LOG_BACKUP"
+    exit 0
+fi
+
+# -----------------------------------------------------
+# ERROS
+# -----------------------------------------------------
+if [ "$TIPO" = "erro" ]; then
+    ui_titulo "ERROS DO SISTEMA"
+    grep -i "erro" "$LOG_BACKUP"
+    exit 0
+fi
+
+# -----------------------------------------------------
+# SISTEMA
+# -----------------------------------------------------
+if [ "$TIPO" = "sistema" ]; then
+    ui_titulo "LOG COMPLETO DO SAR"
+    cat "$LOG_BACKUP"
+    exit 0
+fi
+
+# -----------------------------------------------------
+# MODO LIVE
+# -----------------------------------------------------
+if [ "$TIPO" = "tail" ]; then
+    ui_titulo "MONITOR EM TEMPO REAL"
+    tail -f "$LOG_BACKUP"
+    exit 0
+fi
+
+# -----------------------------------------------------
+# DEFAULT
+# -----------------------------------------------------
+ui_erro "Tipo inválido"
+ajuda

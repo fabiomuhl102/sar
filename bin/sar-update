@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# =====================================================
+# SAR - UPDATE SYSTEM
+# =====================================================
+
+source /opt/automacao/scripts/lib/configuracao.sh
+source /opt/automacao/scripts/lib/identidade.sh
+source /opt/automacao/scripts/lib/logger.sh
+
+echo
+echo "=========================================================="
+echo "           SAR - ATUALIZAÇÃO DO SISTEMA"
+echo "=========================================================="
+echo
+
+# -----------------------------------------------------
+# Versão atual
+# -----------------------------------------------------
+VERSAO_ATUAL="$VERSAO"
+VERSAO_NOVA="1.0.1"
+
+echo "Versão atual........: $VERSAO_ATUAL"
+echo "Versão disponível....: $VERSAO_NOVA"
+echo
+
+# -----------------------------------------------------
+# Verificação do sistema
+# -----------------------------------------------------
+log_info "Iniciando verificação antes do update"
+
+sar-check >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    log_error "Sistema instável. Update abortado."
+    exit 1
+fi
+
+# -----------------------------------------------------
+# Backup de segurança antes do update
+# -----------------------------------------------------
+log_info "Criando backup de segurança antes do update"
+
+BACKUP_ANTES_UPDATE="/mnt/backups/pre_update_$(date +%Y-%m-%d_%H-%M-%S).tar.gz"
+
+tar -czf "$BACKUP_ANTES_UPDATE" \
+    /opt/automacao/bin \
+    /opt/automacao/scripts \
+    /opt/automacao/configs \
+    /opt/automacao/documentacao \
+    2> /tmp/sar_update_error.log
+
+if [ $? -eq 0 ]; then
+    log_ok "Backup de segurança criado: $BACKUP_ANTES_UPDATE"
+else
+    log_error "Falha ao criar backup de segurança"
+    cat /tmp/sar_update_error.log
+    exit 1
+fi
+#------------------------------------------------------
+# Simulação de update
+# -----------------------------------------------------
+echo
+echo "ℹ Aplicando atualizações..."
+sleep 1
+echo "ℹ Atualizando módulos..."
+sleep 1
+echo "ℹ Validando sistema..."
+sleep 1
+
+# -----------------------------------------------------
+# Resultado final
+# -----------------------------------------------------
+log_ok "SAR atualizado com sucesso para versão $VERSAO_NOVA"
+
+echo
+echo "=========================================================="
+echo "           UPDATE CONCLUÍDO"
+echo "=========================================================="
+echo

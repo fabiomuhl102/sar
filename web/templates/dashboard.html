@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+SAR Dashboard
+{% endblock %}
+
+{% block conteudo %}
+
+<div class="cards">
+
+    <div class="card">
+        <h3>CPU</h3>
+        <div class="valor" id="cpu">--</div>
+    </div>
+
+    <div class="card">
+        <h3>Memória</h3>
+        <div class="valor" id="memoria">--</div>
+    </div>
+
+    <div class="card">
+        <h3>Disco</h3>
+        <div class="valor" id="disco">--</div>
+    </div>
+
+    <div class="card">
+        <h3>Containers</h3>
+        <div class="valor" id="containers">--</div>
+    </div>
+
+</div>
+
+<div class="painel">
+
+    <div class="box">
+
+        <h2>Uso do Sistema</h2>
+
+        <canvas id="graficoCPU"></canvas>
+
+    </div>
+
+    <div class="box">
+
+        <h2>Eventos do SAR</h2>
+
+        <pre id="logs">
+
+Carregando...
+
+        </pre>
+
+    </div>
+
+</div>
+
+{% endblock %}

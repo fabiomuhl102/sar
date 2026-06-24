@@ -1,0 +1,27 @@
+services:
+  nodered:
+    image: nodered/node-red:4.1.1-debian
+    container_name: nodered
+    restart: unless-stopped
+
+    env_file:
+      - /opt/automacao/.env
+
+    ports:
+      - "1880:1880"
+
+    volumes:
+      - /opt/automacao/volumes/nodered:/data
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    networks:
+      - automacao
+
+networks:
+  automacao:
+    external: true

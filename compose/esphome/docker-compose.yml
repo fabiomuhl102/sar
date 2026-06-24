@@ -1,0 +1,22 @@
+services:
+  esphome:
+    image: ghcr.io/esphome/esphome:stable
+    container_name: esphome
+    restart: unless-stopped
+
+    env_file:
+      - /opt/automacao/.env
+
+    volumes:
+      - /opt/automacao/volumes/esphome:/config
+      - /etc/localtime:/etc/localtime:ro
+
+    ports:
+      - "6052:6052"
+
+    networks:
+      - automacao
+
+networks:
+  automacao:
+    external: true
