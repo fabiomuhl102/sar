@@ -1,21 +1,48 @@
-# Logs
-*.log
-logs/
+# =========================
+# SAR - Git Ignore
+# =========================
 
-# Backups
-backup/
-*.tar.gz
-
-# Runtime
-temp/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Volumes (NÃO versionar)
+# Virtual environments (CRÍTICO)
+venv/
+.venv/
+**/venv/
+**/.venv/
+**/site-packages/
+
+# Logs
+logs/
+*.log
+
+# Runtime / temp
+temp/
+tmp/
+
+# Backups (dados reais, não versionar)
+backup/
+**/backup/
+*.tar.gz
+
+# Database local
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker volumes (NUNCA versionar)
 volumes/
 
-# Environment
+# Environment files
 .env
+*.env
 
-# Cache
-*.cache
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
