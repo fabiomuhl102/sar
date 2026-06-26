@@ -46,3 +46,6 @@ volumes/
 
 # OS
 .DS_Store
+
+# Git
+.git/

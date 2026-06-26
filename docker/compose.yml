@@ -1,0 +1,73 @@
+services:
+
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    network_mode: host
+    volumes:
+      - ../volumes/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+  nodered:
+    container_name: nodered
+    image: nodered/node-red:latest
+    user: "1000:1000"
+    ports:
+      - "1880:1880"
+    volumes:
+      - ../volumes/nodered:/data
+    restart: unless-stopped
+
+  esphome:
+    container_name: esphome
+    image: ghcr.io/esphome/esphome:stable
+    ports:
+      - "6052:6052"
+    volumes:
+      - ../volumes/esphome:/config
+    restart: unless-stopped
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ../volumes/mosquitto/config:/mosquitto/config
+      - ../volumes/mosquitto/data:/mosquitto/data
+      - ../volumes/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ../compose/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:lts
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../volumes/portainer:/data
+    restart: unless-stopped
+
+volumes:
+  grafana_data:
+  prometheus_data:

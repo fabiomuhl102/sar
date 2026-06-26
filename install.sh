@@ -1,136 +1,111 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-BASE="$(cd "$(dirname "$0")" && pwd)"
-LOG="/var/log/sar-install.log"
-
+BASE="/opt/automacao/sar_git"
+COMPOSE_FILE="$BASE/compose.yml"
+LOG="$BASE/logs/sar-v4.log"
 mkdir -p /var/log
-
 exec > >(tee -a "$LOG") 2>&1
 
-# =========================
-# HEADER
-# =========================
-
 echo "========================================"
-echo "     SAR INSTALLER V3 (PRODUCTION)"
+echo "   SAR INSTALLER V4 - PROFESSIONAL"
 echo "========================================"
-echo "Log: $LOG"
+echo "Base: $BASE"
+echo "Log : $LOG"
 echo ""
 
-# =========================
-# MENU
-# =========================
-
-echo "Selecione o modo:"
-echo "1) Instalar FULL STACK (PC1 / PC2)"
-echo "2) Reinstalar (SAFE MODE)"
-echo "3) Apenas verificar sistema"
-echo "4) Parar stack"
-echo ""
-
-read -p "Opção: " OPTION
-
-# =========================
-# FUNÇÕES
-# =========================
-
+# -------------------------
+# CHECK DOCKER
+# -------------------------
 check_docker() {
     echo "[CHECK] Docker..."
-    if ! command -v docker >/dev/null 2>&1; then
-        echo "❌ Docker não instalado"
-        exit 1
-    fi
-
-    if ! docker info >/dev/null 2>&1; then
-        echo "❌ Docker daemon não está rodando"
-        exit 1
-    fi
+    command -v docker >/dev/null || { echo "Docker não instalado"; exit 1; }
+    docker info >/dev/null || { echo "Docker daemon não ativo"; exit 1; }
 }
 
-start_stack() {
-
-    echo "[STACK] Iniciando serviços..."
-
-    docker compose -f compose/mosquitto/docker-compose.yml up -d
-    docker compose -f compose/homeassistant/docker-compose.yml up -d
-    docker compose -f compose/nodered/docker-compose.yml up -d
-    docker compose -f compose/esphome/docker-compose.yml up -d
-    docker compose -f compose/portainer/docker-compose.yml up -d
-
-    docker compose -f compose/prometheus/docker-compose.yml up -d || true
-    docker compose -f compose/grafana/docker-compose.yml up -d || true
-    docker compose -f compose/dashboard/docker-compose.yml up -d || true
-}
-
+# -------------------------
+# STOP SAFE
+# -------------------------
 stop_stack() {
-    echo "[STACK] Parando serviços..."
-
-    docker stop $(docker ps -q) || true
+    echo "[STACK] Parando stack V4..."
+    docker compose -f "$COMPOSE_FILE" down --remove-orphans || true
 }
 
-check_ports() {
-    echo "[CHECK] Portas críticas..."
-
-    ss -tuln | grep -E "1880|8123|3000|9090|9443|8088" || true
+# -------------------------
+# START STACK
+# -------------------------
+start_stack() {
+    echo "[STACK] Subindo stack V4..."
+    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
 }
 
-status_report() {
+# -------------------------
+# CLEAN SAFE (NUNCA DESTRUTIVO)
+# -------------------------
+cleanup() {
+    echo "[CLEAN] Removendo apenas orphans e redes antigas..."
+    docker container prune -f || true
+    docker network prune -f || true
+}
+
+# -------------------------
+# STATUS
+# -------------------------
+status() {
     echo ""
-    echo "========== STATUS =========="
+    echo "=========== STATUS ==========="
     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    echo "============================"
+    echo "=============================="
 }
 
-# =========================
-# EXECUÇÃO
-# =========================
+# -------------------------
+# MENU
+# -------------------------
+echo "Selecione:"
+echo "1) START STACK"
+echo "2) RESTART STACK"
+echo "3) STOP STACK"
+echo "4) CLEAN + START"
+echo "5) STATUS"
+echo ""
+
+read -p "Opção: " opt
 
 check_docker
 
-case "$OPTION" in
+case "$opt" in
 
 1)
-    echo "[MODE] FULL STACK INSTALL"
     start_stack
     ;;
 
 2)
-    echo "[MODE] SAFE REINSTALL"
     stop_stack
     start_stack
     ;;
 
 3)
-    echo "[MODE] SYSTEM CHECK"
-    check_ports
-    status_report
-    ;;
-
-4)
-    echo "[MODE] STOP STACK"
     stop_stack
     ;;
 
+4)
+    stop_stack
+    cleanup
+    start_stack
+    ;;
+
+5)
+    status
+    ;;
+
 *)
-    echo "❌ Opção inválida"
+    echo "Opção inválida"
     exit 1
     ;;
 esac
 
-# =========================
-# FINAL
-# =========================
-
 echo ""
-echo "✔ FINALIZADO"
-status_report
-
+status
 echo ""
-echo "Dashboard: http://localhost:8088"
-echo "Grafana: http://localhost:3000"
-echo "Node-RED: http://localhost:1880"
-echo "Home Assistant: http://localhost:8123"
-echo ""
-echo "Log salvo em: $LOG"
+echo "✔ FINALIZADO V4"
