@@ -49,3 +49,4 @@ volumes/
 
 # Git
 .git/
+install.sh.bak
