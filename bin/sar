@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
+
+source "$BASE/scripts/lib/cores.sh"
+
+clear
+
+echo
+echo "==============================================="
+echo "              SAR V5 PROFESSIONAL"
+echo "==============================================="
+echo
+echo "1) Docker Stack"
+echo "2) Dashboard"
+echo "3) Backup"
+echo "4) Git"
+echo "5) Serviços"
+echo "6) Configurações"
+echo "7) Logs"
+echo "8) Atualizações"
+echo
+echo "0) Sair"
+echo
+
+read -rp "Opção: " OP
+
+case "$OP" in
+
+1)
+    bash "$BASE/scripts/menu/docker.sh"
+    ;;
+
+2)
+    bash "$BASE/scripts/menu/dashboard.sh"
+    ;;
+
+3)
+    bash "$BASE/scripts/menu/backup.sh"
+    ;;
+
+4)
+    bash "$BASE/scripts/menu/git.sh"
+    ;;
+
+5)
+    bash "$BASE/scripts/menu/services.sh"
+    ;;
+
+6)
+    bash "$BASE/scripts/menu/config.sh"
+    ;;
+
+7)
+    bash "$BASE/scripts/menu/logs.sh"
+    ;;
+
+8)
+    bash "$BASE/scripts/menu/update.sh"
+    ;;
+
+0)
+    exit 0
+    ;;
+
+*)
+    echo "Opção inválida."
+    ;;
+esac
