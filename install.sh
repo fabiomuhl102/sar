@@ -1,77 +1,136 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e  # interrompe em qualquer erro real
+set -e
 
-echo "==================================="
-echo " SAR INSTALLER - SAFE VERSION"
-echo "==================================="
+BASE="$(cd "$(dirname "$0")" && pwd)"
+LOG="/var/log/sar-install.log"
 
-# =========================
-# BASE (pode ser sobrescrito externamente)
-# =========================
-BASE="${BASE:-/opt/automacao}"
+mkdir -p /var/log
 
-echo "[1/6] Criando estrutura base..."
-sudo mkdir -p "$BASE"
-
-echo "[2/6] Copiando sistema..."
-sudo rsync -av \
-  --exclude 'venv' \
-  --exclude '__pycache__' \
-  --exclude '*.pyc' \
-  --exclude '.git' \
-  ./ "$BASE/"
-
-cd "$BASE" || exit 1
-
-echo "[3/6] Criando ambiente Python..."
-python3 -m venv venv
-source venv/bin/activate
-
-echo "[4/6] Instalando dependências..."
-pip install --upgrade pip
-
-if [ -f requirements.txt ]; then
-    pip install -r requirements.txt
-fi
-
-echo "[5/6] Criando links globais..."
-
-sudo ln -sf "$BASE/bin/sar-backup" /usr/local/bin/sar-backup
-sudo ln -sf "$BASE/bin/sar-backup-full" /usr/local/bin/sar-backup-full
-sudo ln -sf "$BASE/bin/sar-backup-auto" /usr/local/bin/sar-backup-auto
-sudo ln -sf "$BASE/bin/sar-backup-disaster" /usr/local/bin/sar-backup-disaster
-sudo ln -sf "$BASE/bin/sar-check" /usr/local/bin/sar-check
-sudo ln -sf "$BASE/bin/sar-restore" /usr/local/bin/sar-restore
-
-echo "[6/7] Finalizando instalação..."
+exec > >(tee -a "$LOG") 2>&1
 
 # =========================
-# VALIDAÇÃO PÓS-INSTALL
+# HEADER
 # =========================
 
-echo "[CHECK] Validando instalação..."
+echo "========================================"
+echo "     SAR INSTALLER V3 (PRODUCTION)"
+echo "========================================"
+echo "Log: $LOG"
+echo ""
 
-if ! command -v sar-check >/dev/null 2>&1; then
-    echo "❌ sar-check não encontrado"
+# =========================
+# MENU
+# =========================
+
+echo "Selecione o modo:"
+echo "1) Instalar FULL STACK (PC1 / PC2)"
+echo "2) Reinstalar (SAFE MODE)"
+echo "3) Apenas verificar sistema"
+echo "4) Parar stack"
+echo ""
+
+read -p "Opção: " OPTION
+
+# =========================
+# FUNÇÕES
+# =========================
+
+check_docker() {
+    echo "[CHECK] Docker..."
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "❌ Docker não instalado"
+        exit 1
+    fi
+
+    if ! docker info >/dev/null 2>&1; then
+        echo "❌ Docker daemon não está rodando"
+        exit 1
+    fi
+}
+
+start_stack() {
+
+    echo "[STACK] Iniciando serviços..."
+
+    docker compose -f compose/mosquitto/docker-compose.yml up -d
+    docker compose -f compose/homeassistant/docker-compose.yml up -d
+    docker compose -f compose/nodered/docker-compose.yml up -d
+    docker compose -f compose/esphome/docker-compose.yml up -d
+    docker compose -f compose/portainer/docker-compose.yml up -d
+
+    docker compose -f compose/prometheus/docker-compose.yml up -d || true
+    docker compose -f compose/grafana/docker-compose.yml up -d || true
+    docker compose -f compose/dashboard/docker-compose.yml up -d || true
+}
+
+stop_stack() {
+    echo "[STACK] Parando serviços..."
+
+    docker stop $(docker ps -q) || true
+}
+
+check_ports() {
+    echo "[CHECK] Portas críticas..."
+
+    ss -tuln | grep -E "1880|8123|3000|9090|9443|8088" || true
+}
+
+status_report() {
+    echo ""
+    echo "========== STATUS =========="
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo "============================"
+}
+
+# =========================
+# EXECUÇÃO
+# =========================
+
+check_docker
+
+case "$OPTION" in
+
+1)
+    echo "[MODE] FULL STACK INSTALL"
+    start_stack
+    ;;
+
+2)
+    echo "[MODE] SAFE REINSTALL"
+    stop_stack
+    start_stack
+    ;;
+
+3)
+    echo "[MODE] SYSTEM CHECK"
+    check_ports
+    status_report
+    ;;
+
+4)
+    echo "[MODE] STOP STACK"
+    stop_stack
+    ;;
+
+*)
+    echo "❌ Opção inválida"
     exit 1
-fi
+    ;;
+esac
 
-if [ ! -d "$BASE/venv" ]; then
-    echo "❌ venv não criado corretamente"
-    exit 1
-fi
-
-if [ ! -d "$BASE/bin" ]; then
-    echo "❌ bin não encontrado"
-    exit 1
-fi
-
-echo "✔ Instalação validada com sucesso"
+# =========================
+# FINAL
+# =========================
 
 echo ""
-echo "==================================="
-echo " ✔ SAR INSTALADO COM SUCESSO"
-echo " ✔ BASE: $BASE"
-echo " ✔ READY TO USE"
-echo "==================================="
+echo "✔ FINALIZADO"
+status_report
+
+echo ""
+echo "Dashboard: http://localhost:8088"
+echo "Grafana: http://localhost:3000"
+echo "Node-RED: http://localhost:1880"
+echo "Home Assistant: http://localhost:8123"
+echo ""
+echo "Log salvo em: $LOG"
